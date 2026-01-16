@@ -1,0 +1,182 @@
+/*
+Copyright 2024 Kube Static Pool Autoscaler contributors
+SPDX-License-Identifier: Apache-2.0
+*/
+
+syntax = "proto3";
+
+package grpc;
+
+option go_package = "kube-static-pool-autoscaler/internal/grpc";
+
+// ExternalCloudProvider is the interface for Cluster Autoscaler External Cloud Provider
+service ExternalCloudProvider {
+    // GetNodeGroups returns a list of all node groups
+    rpc GetNodeGroups(GetNodeGroupsRequest) returns (GetNodeGroupsResponse);
+
+    // GetNodes returns all nodes in a node group
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+
+    // NodeGroupExists checks if a node group exists
+    rpc NodeGroupExists(NodeGroupExistsRequest) returns (NodeGroupExistsResponse);
+
+    // GetMachineType returns the machine type for a node
+    rpc GetMachineType(GetMachineTypeRequest) returns (GetMachineTypeResponse);
+
+    // TemplateNode returns a template node for a node group
+    rpc TemplateNode(TemplateNodeRequest) returns (TemplateNodeResponse);
+
+    // GetNodeState returns the state of a node
+    rpc GetNodeState(GetNodeStateRequest) returns (GetNodeStateResponse);
+
+    // DeleteNode removes a node from the node group
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+}
+
+// GetNodeGroupsRequest is the request for GetNodeGroups
+message GetNodeGroupsRequest {}
+
+// GetNodeGroupsResponse is the response for GetNodeGroups
+message GetNodeGroupsResponse {
+    repeated NodeGroup node_groups = 1;
+}
+
+// GetNodesRequest is the request for GetNodes
+message GetNodesRequest {
+    string node_group_name = 1;
+}
+
+// GetNodesResponse is the response for GetNodes
+message GetNodesResponse {
+    repeated Node nodes = 1;
+}
+
+// NodeGroupExistsRequest is the request for NodeGroupExists
+message NodeGroupExistsRequest {
+    string node_group_name = 1;
+}
+
+// NodeGroupExistsResponse is the response for NodeGroupExists
+message NodeGroupExistsResponse {
+    bool exists = 1;
+}
+
+// GetMachineTypeRequest is the request for GetMachineType
+message GetMachineTypeRequest {
+    string node_name = 1;
+}
+
+// GetMachineTypeResponse is the response for GetMachineType
+message GetMachineTypeResponse {
+    string machine_type = 1;
+}
+
+// TemplateNodeRequest is the request for TemplateNode
+message TemplateNodeRequest {
+    string node_group_name = 1;
+}
+
+// TemplateNodeResponse is the response for TemplateNode
+message TemplateNodeResponse {
+    bytes node = 1;
+}
+
+// GetNodeStateRequest is the request for GetNodeState
+message GetNodeStateRequest {
+    string node_name = 1;
+}
+
+// GetNodeStateResponse is the response for GetNodeState
+message GetNodeStateResponse {
+    NodeState state = 1;
+}
+
+// DeleteNodeRequest is the request for DeleteNode
+message DeleteNodeRequest {
+    string node_name = 1;
+}
+
+// DeleteNodeResponse is the response for DeleteNode
+message DeleteNodeResponse {}
+
+// NodeGroup represents a node group
+message NodeGroup {
+    string name = 1;
+    int32 min_size = 2;
+    int32 max_size = 3;
+    int32 target_size = 4;
+    map<string, string> labels = 5;
+    repeated string taints = 6;
+    NodeGroupDebugInfo debug_info = 7;
+}
+
+// NodeGroupDebugInfo contains debug information for a node group
+message NodeGroupDebugInfo {
+    string cloud_provider_id = 1;
+    string node_group_capacity = 2;
+    string node_group_allocatable = 3;
+    string node_group_names = 4;
+}
+
+// Node represents a node
+message Node {
+    string name = 1;
+    map<string, string> labels = 2;
+    map<string, string> annotations = 3;
+    repeated string taints = 4;
+    NodeSpec spec = 5;
+    NodeStatus status = 6;
+}
+
+// NodeSpec contains the spec of a node
+message NodeSpec {
+    string provider_id = 1;
+    string unschedulable = 2;
+    repeated NodeTaint taints = 3;
+}
+
+// NodeTaint represents a taint on a node
+message NodeTaint {
+    string key = 1;
+    string value = 2;
+    string effect = 3;
+}
+
+// NodeStatus contains the status of a node
+message NodeStatus {
+    NodeResources capacity = 1;
+    NodeResources allocatable = 2;
+    repeated NodeCondition conditions = 3;
+    repeated NodeAddress addresses = 4;
+}
+
+// NodeResources contains resource information
+message NodeResources {
+    map<string, int64> capacity = 1;
+}
+
+// NodeCondition represents a node condition
+message NodeCondition {
+    string type = 1;
+    string status = 2;
+    string reason = 3;
+    string message = 4;
+    int64 last_transition_time = 5;
+}
+
+// NodeAddress represents a node address
+message NodeAddress {
+    string type = 1;
+    string address = 2;
+}
+
+// NodeState represents the state of a node
+enum NodeState {
+    UNKNOWN = 0;
+    CHECKING = 1;
+    READY = 2;
+    RUNNING = 3;
+    NOT_RUNNING = 4;
+    STOPPED = 5;
+    DELETING = 6;
+}

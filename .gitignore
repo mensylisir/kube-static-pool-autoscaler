@@ -1,0 +1,72 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+*.out
+
+# Go build outputs
+vendor/
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Configuration
+config.yaml
+*.local.yaml
+*.local.yml
+
+# Certificates
+*.crt
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temp files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Coverage
+coverage.out
+coverage.html
+*.coverprofile
+
+# Docker
+.docker/
+
+# Kubernetes
+*.kubeconfig
+kubeconfig/
+
+# IDE specific
+.idea/workspace.xml
+.idea/tasks.xml
+.vscode/settings.json

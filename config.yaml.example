@@ -1,0 +1,28 @@
+# Kube Static Pool Autoscaler Configuration
+
+# Database Configuration (PostgreSQL)
+database:
+  host: "localhost"
+  port: 5432
+  name: "ksa"
+  user: "ksa"
+  password: "change_me"
+  ssl_mode: "disable"
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: 300  # seconds
+
+# gRPC Server Configuration
+grpc:
+  host: "0.0.0.0"
+  port: 443
+  cert_file: "/etc/ksa/tls.crt"
+  key_file: "/etc/ksa/tls.key"
+
+# SSH Connection Pool Configuration
+ssh:
+  max_idle_connections: 10
+  max_connection_duration: 300  # seconds
+  connection_timeout: 30        # seconds
+  max_retries: 3
+  retry_interval: 1000          # milliseconds
