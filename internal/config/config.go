@@ -19,6 +19,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	GRPC     GRPCConfig     `mapstructure:"grpc"`
 	SSH      SSHConfig      `mapstructure:"ssh"`
+	K8s      K8sConfig      `mapstructure:"k8s"`
 }
 
 // DatabaseConfig holds database connection settings
@@ -49,6 +50,12 @@ type SSHConfig struct {
 	ConnectionTimeout     int `mapstructure:"connection_timeout"`      // in seconds
 	MaxRetries            int `mapstructure:"max_retries"`
 	RetryInterval         int `mapstructure:"retry_interval"` // in milliseconds
+}
+
+// K8sConfig holds Kubernetes configuration
+type K8sConfig struct {
+	Kubeconfig string `mapstructure:"kubeconfig"`
+	Namespace  string `mapstructure:"namespace"`
 }
 
 // DSN returns the PostgreSQL connection string
@@ -140,6 +147,21 @@ func (c *Config) setDefaults() {
 	if c.SSH.RetryInterval == 0 {
 		c.SSH.RetryInterval = 1000
 	}
+	if c.K8s.Namespace == "" {
+		c.K8s.Namespace = "default"
+	}
+}
+
+// LoadKubeconfig loads a Kubernetes config from a file
+func LoadKubeconfig(path string) error {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("kubeconfig file not found: %s", path)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to check kubeconfig: %w", err)
+	}
+	return nil
 }
 
 // LoadDatabaseConfig loads database configuration from environment variables

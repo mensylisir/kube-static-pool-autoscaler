@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-static-pool-autoscaler
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ksa-postgresql
+  namespace: kube-static-pool-autoscaler
+  labels:
+    app.kubernetes.io/name: kube-static-pool-autoscaler
+type: Opaque
+stringData:
+  password: "ksa_password_change_me"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ksa-postgresql-pvc
+  namespace: kube-static-pool-autoscaler
+  labels:
+    app.kubernetes.io/name: kube-static-pool-autoscaler
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ksa-postgresql
+  namespace: kube-static-pool-autoscaler
+  labels:
+    app.kubernetes.io/name: kube-static-pool-autoscaler
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-static-pool-autoscaler
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-static-pool-autoscaler
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: "ksa"
+            - name: POSTGRES_DB
+              value: "ksa"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ksa-postgresql
+                  key: password
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - ksa
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - ksa
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ksa-postgresql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ksa-postgresql
+  namespace: kube-static-pool-autoscaler
+  labels:
+    app.kubernetes.io/name: kube-static-pool-autoscaler
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: postgresql
+      protocol: TCP
+      name: postgresql
+  selector:
+    app.kubernetes.io/name: kube-static-pool-autoscaler
+    app.kubernetes.io/component: database
